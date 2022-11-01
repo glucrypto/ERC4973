@@ -9,7 +9,7 @@ import {BitMaps} from "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 import {IERC721Metadata} from "./interfaces/IERC721Metadata.sol";
 import {IERC4973} from "./interfaces/IERC4973.sol";
 
-bytes32 constant AGREEMENT_HASH = keccak256("Agreement(address active,address passive,string tokenURI)");
+bytes32 constant AGREEMENT_HASH = keccak256("Agreement(address maker,address taker,string tokenURI)");
 
 /// @notice Reference implementation of EIP-4973 tokens.
 /// @author Tim Daubenschütz, Rahul Rumalla (https://github.com/rugpullindex/ERC4973/blob/master/src/ERC4973.sol)
@@ -81,23 +81,23 @@ abstract contract ERC4973 is EIP712, ERC165, IERC721Metadata, IERC4973 {
         return tokenId;
     }
 
-    function _safeCheckAgreement(address active, address passive, string calldata uri, bytes calldata signature)
+    function _safeCheckAgreement(address maker, address taker, string calldata uri, bytes calldata signature)
         internal
         virtual
         returns (uint256)
     {
-        bytes32 hash = _getHash(active, passive, uri);
+        bytes32 hash = _getHash(maker, taker, uri);
         uint256 tokenId = uint256(hash);
 
         require(
-            SignatureChecker.isValidSignatureNow(passive, hash, signature), "_safeCheckAgreement: invalid signature"
+            SignatureChecker.isValidSignatureNow(taker, hash, signature), "_safeCheckAgreement: invalid signature"
         );
         require(!_usedHashes.get(tokenId), "_safeCheckAgreement: already used");
         return tokenId;
     }
 
-    function _getHash(address active, address passive, string calldata uri) internal view returns (bytes32) {
-        bytes32 structHash = keccak256(abi.encode(AGREEMENT_HASH, active, passive, keccak256(bytes(uri))));
+    function _getHash(address maker, address taker, string calldata uri) internal view returns (bytes32) {
+        bytes32 structHash = keccak256(abi.encode(AGREEMENT_HASH, maker, taker, keccak256(bytes(uri))));
         return _hashTypedDataV4(structHash);
     }
 
